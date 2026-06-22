@@ -1,5 +1,5 @@
 # perception-detector
----
+
 ## Overview
 
 This perception detector is a computer vision pipeline that utilizes YOLOv8 to detect cars 
