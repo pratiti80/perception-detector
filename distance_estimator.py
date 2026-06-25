@@ -13,6 +13,7 @@ FOCAL_LENGTH = 700.0  # pixels
 cap = cv2.VideoCapture("data/test.mp4")
 
 past_distances = {}
+smooth_distances = {}
 prev_time = time.time()
 
 while cap.isOpened():
@@ -26,20 +27,6 @@ while cap.isOpened():
     # Run inference (classes=[2, 7] targets cars and trucks in COCO)
     results = model.track(frame, classes=[2, 7], persist=True, verbose=False, tracker='botsort.yaml')
 
-    # for box in results[0].boxes:
-    #     # Get 2D bounding box coordinates
-    #     x1, y1, x2, y2 = map(int, box.xyxy[0])
-    #     bbox_width = x2 - x1
-
-    #     if bbox_width > 0:
-    #         # Calculate distance using pinhole camera formula
-    #         distance = (REAL_CAR_WIDTH * FOCAL_LENGTH) / bbox_width
-
-    #         # Draw 2D Box
-    #         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-    #         # Display calculated distance
-    #         cv2.putText(frame, f"{distance:.1f}m", (x1, y1 - 10),
-    #                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
     
     for box in results[0].boxes:
             # Get 2D bounding box coordinates
@@ -49,8 +36,16 @@ while cap.isOpened():
 
             if bbox_width > 0:
                 # Calculate distance 
+                ALPHA = 0.3
                 track_id = int(box.id[0]) if box.id is not None else -1
-                distance = (REAL_CAR_WIDTH * FOCAL_LENGTH) / bbox_width
+                raw_dist = (REAL_CAR_WIDTH * FOCAL_LENGTH) / bbox_width
+                if track_id in smooth_distances:
+                    smooth_distances[track_id] = ALPHA * raw_dist + (1 - ALPHA) * smooth_distances[track_id]
+                else:
+                    smooth_distances[track_id] = raw_dist
+                
+                distance = smooth_distances[track_id]
+
                 ttc = float('inf')
                 if track_id in past_distances:
                     rel_speed = (past_distances[track_id] - distance) / delta_t
