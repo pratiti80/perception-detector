@@ -5,7 +5,7 @@
 This perception detector is a computer vision pipeline that utilizes YOLOv8 to detect cars 
 and trucks and calculate their distance from the camera in real time.
 ## Demo
-
+![Demo](assets/demo.gif)
 
 ## Features
 
